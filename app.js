@@ -1,159 +1,88 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
+const firebaseConfig = { 
     apiKey: "AIzaSyCtIagFFJBFRjvg5usXTm575YqOeeDE1G0",
     authDomain: "mi-inventario-51f82.firebaseapp.com",
     projectId: "mi-inventario-51f82",
     storageBucket: "mi-inventario-51f82.firebasestorage.app",
-    messagingSenderId: "79417755416",
     appId: "1:79417755416:web:e1bbab46cda2bdbb5da56d"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-let currentUser = "";
+let currentBase64 = "";
 
-window.showSection = (id) => {
-    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+window.nav = (id) => {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 };
 
-// --- GPS MÁXIMA PRECISIÓN ---
-async function getAuditData() {
-    let data = { ip: "0.0.0.0", loc: "Sin permiso", device: navigator.userAgent.includes("Windows") ? "PC/Laptop" : "Móvil" };
-    try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const json = await res.json();
-        data.ip = json.ip;
-        return new Promise(resolve => {
-            navigator.geolocation.getCurrentPosition(
-                p => { data.loc = `${p.coords.latitude},${p.coords.longitude}`; resolve(data); },
-                () => resolve(data),
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
-        });
-    } catch { return data; }
-}
-
-async function registrarLog(tipo, detalle) {
-    const info = await getAuditData();
-    await addDoc(collection(db, "historial"), {
-        tipo, usuario: currentUser, detalle, ip: info.ip, loc: info.loc, device: info.device, fecha: new Date().toLocaleString()
-    });
-}
-
-// --- LOGIN ---
-document.getElementById('btnLogin').onclick = async () => {
-    const u = document.getElementById('user-input').value;
-    const p = document.getElementById('pass-input').value;
-    if (u === "admiut" && p === "#Reyn0sa#") {
-        currentUser = u;
-        document.getElementById('nav-historial').style.display = "block";
-    } else if (u === "usuariout" && p === "12131415") {
-        currentUser = u;
-        document.getElementById('nav-historial').style.display = "none";
-    } else { return alert("Acceso Incorrecto"); }
-    await registrarLog("LOGIN", "Entró");
-    document.getElementById('auth-status').innerText = `✅ ${currentUser.toUpperCase()}`;
-    showSection('gestion-section');
-};
-
-// --- GUARDAR / SUMAR CON ID NUMÉRICO ---
-document.getElementById('btnGuardar').onclick = async () => {
-    const cod = document.getElementById('g-codigo').value;
-    const nom = document.getElementById('g-nombre').value;
-    const cant = Number(document.getElementById('g-cantidad').value);
-    
-    const q = query(collection(db, "productos"), where("codigo", "==", cod));
-    const snap = await getDocs(q);
-
-    if(!snap.empty) {
-        await updateDoc(doc(db, "productos", snap.docs[0].id), { cantidad: snap.docs[0].data().cantidad + cant });
-        await registrarLog("STOCK", `Sumó ${cant} a ${nom}`);
-    } else {
-        const allDocs = await getDocs(collection(db, "productos"));
-        const nuevoID = allDocs.size + 1;
-        await addDoc(collection(db, "productos"), { 
-            idNum: nuevoID, nombre: nom, codigo: cod, cantidad: cant, 
-            categoria: document.getElementById('g-categoria').value, 
-            estado: document.getElementById('g-estado').value 
-        });
-        await registrarLog("CREAR", `Producto #${nuevoID} creado`);
-    }
-};
-
-// --- BORRAR / RESTAR ---
-document.getElementById('btnEliminarRapido').onclick = async () => {
-    const cod = document.getElementById('g-codigo').value;
-    const cant = Number(document.getElementById('g-cantidad').value);
-    const q = query(collection(db, "productos"), where("codigo", "==", cod));
-    const snap = await getDocs(q);
-    if(snap.empty) return alert("No existe");
-    const pDoc = snap.docs[0];
-    const nuevaCant = pDoc.data().cantidad - cant;
-    if(nuevaCant <= 0) {
-        if(confirm("¿Eliminar definitivamente?")) {
-            await deleteDoc(doc(db, "productos", pDoc.id));
-            await registrarLog("ELIMINAR", `Borró #${pDoc.data().idNum}`);
-        }
-    } else {
-        await updateDoc(doc(db, "productos", pDoc.id), { cantidad: nuevaCant });
-        await registrarLog("RESTAR", `Restó a #${pDoc.data().idNum}`);
-    }
-};
-
-// --- SALIDAS ---
-document.getElementById('btnRegistrarSalida').onclick = async () => {
-    const cod = document.getElementById('s-codigo').value;
-    const cant = Number(document.getElementById('s-cantidad').value);
-    const q = query(collection(db, "productos"), where("codigo", "==", cod));
-    const snap = await getDocs(q);
-    if(!snap.empty && snap.docs[0].data().cantidad >= cant) {
-        await updateDoc(doc(db, "productos", snap.docs[0].id), { cantidad: snap.docs[0].data().cantidad - cant });
-        await addDoc(collection(db, "salidas"), { codigo: cod, responsable: document.getElementById('s-responsable').value, cantidad: cant, fecha: new Date().toLocaleString() });
-        await registrarLog("SALIDA", `Salida de #${snap.docs[0].data().idNum}`);
-    }
-};
-
-// --- DEVOLUCIONES ---
-document.getElementById('btnRegistrarDevolucion').onclick = async () => {
-    const cod = document.getElementById('d-codigo').value;
-    const cant = Number(document.getElementById('d-cantidad').value);
-    const q = query(collection(db, "productos"), where("codigo", "==", cod));
+// --- AUTO-RELLENAR AL BUSCAR (Imagen 1000088439.jpg) ---
+window.buscarYAutoRellenar = async () => {
+    const mod = document.getElementById('f-search').value;
+    const q = query(collection(db, "productos"), where("modelo", "==", mod));
     const snap = await getDocs(q);
     if(!snap.empty) {
-        await updateDoc(doc(db, "productos", snap.docs[0].id), { cantidad: snap.docs[0].data().cantidad + cant });
-        await addDoc(collection(db, "devoluciones"), { codigo: cod, nombre: snap.docs[0].data().nombre, cantidad: cant, motivo: document.getElementById('d-motivo').value, fecha: new Date().toLocaleString() });
-        await registrarLog("DEVOLUCION", `Regresó #${snap.docs[0].data().idNum}`);
-    }
+        const d = snap.docs[0].data();
+        document.getElementById('f-modelo').value = d.modelo || "";
+        document.getElementById('f-parte').value = d.parte || "";
+        document.getElementById('f-nombre').value = d.nombre || "";
+        document.getElementById('f-desc').value = d.desc || "";
+        document.getElementById('f-cant').value = d.cantidad || "";
+        document.getElementById('f-costo').value = d.costo || "";
+        document.getElementById('f-area').value = d.area || "";
+        document.getElementById('f-obs').value = d.obs || "";
+        alert("Objeto cargado.");
+    } else { alert("No encontrado."); }
 };
 
-// --- TABLAS ---
+// --- GUARDAR / ACTUALIZAR ---
+document.getElementById('btnPrincipal').onclick = async () => {
+    const p = document.getElementById('f-parte').value;
+    const datos = {
+        modelo: document.getElementById('f-modelo').value,
+        parte: p,
+        nombre: document.getElementById('f-nombre').value,
+        cantidad: Number(document.getElementById('f-cant').value),
+        area: document.getElementById('f-area').value,
+        img: currentBase64
+    };
+    const q = query(collection(db, "productos"), where("parte", "==", p));
+    const snap = await getDocs(q);
+    if(!snap.empty) {
+        await updateDoc(doc(db, "productos", snap.docs[0].id), datos);
+    } else {
+        const all = await getDocs(collection(db, "productos"));
+        await addDoc(collection(db, "productos"), { idNum: all.size + 1, ...datos });
+    }
+    alert("Realizado.");
+    nav('sec-home');
+};
+
+// --- CÓDIGO DE BARRAS REAL (Imagen 1000088440.jpg) ---
+window.generarPrevisualizacion = () => {
+    const val = document.getElementById('bar-input').value;
+    if(!val) return;
+    JsBarcode("#barcode-svg", val, { format: "CODE128", width: 2, height: 80 });
+    document.getElementById('bar-list-items').innerHTML += `<div>${val}</div>`;
+};
+
+window.imprimirPDF = () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    pdf.text("SISTEMA REYNOSA - ETIQUETAS", 10, 10);
+    pdf.save("etiquetas.pdf");
+};
+
+// --- RENDERIZADO TABLA PRINCIPAL ---
 onSnapshot(collection(db, "productos"), s => {
-    const tb = document.getElementById('tbody-productos'); tb.innerHTML = "";
-    const docs = s.docs.sort((a,b) => a.data().idNum - b.data().idNum);
-    docs.forEach(d => {
-        const p = d.data();
-        tb.innerHTML += `<tr><td>${p.idNum}</td><td>${p.codigo}</td><td>${p.nombre}</td><td><b>${p.cantidad}</b></td><td>${p.estado}</td></tr>`;
-    });
-});
-
-onSnapshot(collection(db, "salidas"), s => {
-    const tb = document.getElementById('tbody-salidas'); tb.innerHTML = "";
-    s.docs.forEach(d => { const v = d.data(); tb.innerHTML += `<tr><td>${v.codigo}</td><td>${v.responsable}</td><td>${v.cantidad}</td><td>${v.fecha}</td></tr>`; });
-});
-
-onSnapshot(collection(db, "devoluciones"), s => {
-    const tb = document.getElementById('tbody-devoluciones'); tb.innerHTML = "";
-    s.docs.forEach(d => { const v = d.data(); tb.innerHTML += `<tr><td>${v.codigo}</td><td>${v.nombre}</td><td>${v.cantidad}</td><td>${v.motivo}</td><td>${v.fecha}</td></tr>`; });
-});
-
-onSnapshot(collection(db, "historial"), s => {
-    const tb = document.getElementById('tbody-historial'); tb.innerHTML = "";
+    const tb = document.getElementById('tbody-home'); tb.innerHTML = "";
     s.docs.forEach(d => {
-        const v = d.data();
-        const mapLink = v.loc !== "Sin permiso" ? `<a href="https://www.google.com/maps?q=${v.loc}" target="_blank">📍 Ver GPS</a>` : "N/A";
-        tb.innerHTML += `<tr><td>${v.tipo}</td><td>${v.usuario}</td><td>${v.device}</td><td>${v.ip}<br>${mapLink}</td><td>${v.fecha}</td></tr>`;
+        const p = d.data();
+        tb.innerHTML += `<tr>
+            <td>${p.idNum || ''}</td><td>${p.modelo}</td><td>${p.nombre}</td><td>${p.parte}</td>
+            <td>${p.desc || ''}</td><td>${p.costo || ''}</td><td>${p.cantidad}</td><td>${p.area}</td>
+            <td><img src="${p.img || ''}" width="30"></td>
+        </tr>`;
     });
 });
