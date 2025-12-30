@@ -2,102 +2,110 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA REYNOSA 2025 - V4</title>
+    <title>SISTEMA REYNOSA PRO 2025</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
-    <div class="status-bar">
-        <span id="auth-status">⚠️ NO AUTENTICADO</span>
-    </div>
 
-    <nav class="main-nav">
-        <button onclick="showSection('login-section')" class="nav-btn">🔐 LOGIN</button>
-        <button onclick="showSection('gestion-section')" class="nav-btn">📦 GESTIÓN</button>
-        <button onclick="showSection('salidas-section')" class="nav-btn">📤 SALIDAS</button>
-        <button onclick="showSection('devoluciones-section')" class="nav-btn">🔄 DEVOLUCIONES</button>
-        <button id="nav-historial" onclick="showSection('historial-section')" class="nav-btn" style="display:none; background:#ffeaa7;">📊 HISTORIAL</button>
-    </nav>
-
-    <div class="container">
-        <section id="login-section" class="tab-content active">
-            <div class="login-box">
-                <h2>INICIAR SESIÓN</h2>
-                <input type="text" id="user-input" placeholder="Usuario">
-                <input type="password" id="pass-input" placeholder="Contraseña">
-                <button id="btnLogin" class="btn-primary" style="background:#27ae60; width:100%;">Entrar</button>
+    <section id="sec-home" class="screen active">
+        <div class="header-blue">
+            <h1>Página Principal</h1>
+            <div class="main-layout">
+                <div class="nav-stack">
+                    <button onclick="nav('sec-reg')">Registrar</button>
+                    <button onclick="nav('sec-upd')">Actualizar</button>
+                    <button onclick="nav('sec-del')">Eliminar</button>
+                    <button onclick="nav('sec-usr')">Administrar Usuarios</button>
+                    <button onclick="nav('sec-bar')">Imprimir Código de Barras</button>
+                </div>
+                <div class="search-zone">
+                    <select id="hp-filter"><option>Modelo</option><option>P/N</option></select>
+                    <input type="text" id="hp-search" placeholder="Buscar...">
+                    <button class="btn-gray">Buscar</button>
+                </div>
             </div>
-        </section>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Modelo</th><th>Nombre</th><th>P/N</th><th>Descripción</th>
+                        <th>Costo</th><th>Cantidad</th><th>Ubicación</th><th>Imagen</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-home"></tbody>
+            </table>
+        </div>
+        <button class="btn-exit" onclick="location.reload()">Salir</button>
+    </section>
 
-        <section id="gestion-section" class="tab-content">
-            <div class="panel-layout">
-                <aside class="sidebar">
-                    <h3>CONTROL DE PRODUCTO</h3>
-                    <input type="text" id="g-nombre" placeholder="Nombre">
-                    <input type="text" id="g-codigo" placeholder="Código">
-                    <input type="number" id="g-cantidad" placeholder="Cantidad">
-                    <select id="g-categoria"><option>Electrónica</option><option>Hogar</option></select>
-                    <select id="g-estado"><option>Nuevo</option><option>Semi nuevo</option></select>
-                    <div style="display:flex; gap:5px;">
-                        <button id="btnGuardar" class="btn-save" style="flex:1">💾 Guardar/Sumar</button>
-                        <button id="btnEliminarRapido" class="btn-danger" style="flex:1">🗑️ Borrar/Restar</button>
-                    </div>
-                </aside>
-                <main class="table-area">
-                    <table class="data-table">
-                        <thead><tr><th>ID</th><th>COD</th><th>NOMBRE</th><th>STOCK</th><th>ESTADO</th></tr></thead>
-                        <tbody id="tbody-productos"></tbody>
-                    </table>
-                </main>
+    <section id="sec-upd" class="screen screen-form">
+        <h2 id="form-title">Actualizar / Registro de Objeto</h2>
+        <div class="grid-4">
+            <div class="field-group">
+                <label>Modelo</label><div class="input-cb"><input type="text" id="f-modelo"><input type="checkbox" checked></div>
+                <label>No. de Parte</label><div class="input-cb"><input type="text" id="f-parte"><input type="checkbox" checked></div>
+                <label>Nombre</label><div class="input-cb"><input type="text" id="f-nombre"><input type="checkbox" checked></div>
+                <label>Descripción</label><div class="input-cb"><textarea id="f-desc"></textarea><input type="checkbox" checked></div>
             </div>
-        </section>
+            <div class="field-group">
+                <label>Cantidad</label><div class="input-cb"><input type="number" id="f-cant"><input type="checkbox" checked></div>
+                <label>Costo</label><div class="input-cb"><input type="number" id="f-costo"><input type="checkbox" checked></div>
+                <label>Consumible</label><div class="input-cb"><select id="f-cons"><option>Consumible</option><option>No Consumible</option></select><input type="checkbox" checked></div>
+                <div class="type-box">
+                    <span>Tipo</span>
+                    <label><input type="checkbox" id="t-her"> Herramienta</label>
+                    <label><input type="checkbox" id="t-equ"> Equipo</label>
+                </div>
+            </div>
+            <div class="field-group">
+                <label>Ubicación Área</label><div class="input-cb"><input type="text" id="f-area"><input type="checkbox" checked></div>
+                <label>Estante</label><div class="input-cb"><input type="text" id="f-estante"><input type="checkbox" checked></div>
+                <label>Lote</label><div class="input-cb"><input type="text" id="f-lote"><input type="checkbox" checked></div>
+            </div>
+            <div class="field-group">
+                <label>Observaciones</label><div class="input-cb"><textarea id="f-obs"></textarea><input type="checkbox" checked></div>
+                <button class="btn-gray" onclick="document.getElementById('f-file').click()">Adjuntar Foto</button>
+                <input type="file" id="f-file" style="display:none">
+                <img id="f-preview" style="width:100px; display:none;">
+            </div>
+        </div>
+        <div class="form-footer">
+            <input type="text" id="f-search" placeholder="Modelo para buscar">
+            <button class="btn-gray" onclick="buscarYAutoRellenar()">Buscar</button>
+            <button class="btn-gray" id="btnPrincipal">Guardar</button>
+            <button class="btn-gray" onclick="limpiarForm()">Limpiar</button>
+            <button class="btn-gray" onclick="nav('sec-home')">Ir a Página Principal</button>
+        </div>
+    </section>
 
-        <section id="salidas-section" class="tab-content">
-            <div class="panel-layout">
-                <aside class="sidebar">
-                    <h3>REGISTRAR SALIDA</h3>
-                    <input type="text" id="s-codigo" placeholder="Código">
-                    <input type="number" id="s-cantidad" value="1">
-                    <input type="text" id="s-responsable" placeholder="Responsable">
-                    <button id="btnRegistrarSalida" class="btn-warning">🚀 Salida</button>
-                </aside>
-                <main class="table-area">
-                    <table class="data-table">
-                        <thead><tr><th>COD</th><th>RESPONSABLE</th><th>CANT</th><th>FECHA</th></tr></thead>
-                        <tbody id="tbody-salidas"></tbody>
-                    </table>
-                </main>
-            </div>
-        </section>
+    <section id="sec-del" class="screen screen-form">
+        <h2>Eliminación objeto</h2>
+        <div class="del-box">
+            <input type="text" id="del-search" placeholder="Modelo a eliminar">
+            <button class="btn-gray" onclick="buscarParaBorrar()">Buscar</button>
+            <div id="del-info" class="info-display"></div>
+            <button class="btn-gray red-text" onclick="confirmarBorrado()">Eliminar</button>
+            <button class="btn-gray" onclick="nav('sec-home')">Ir a Página Principal</button>
+        </div>
+    </section>
 
-        <section id="devoluciones-section" class="tab-content">
-            <div class="panel-layout">
-                <aside class="sidebar">
-                    <h3>REGISTRAR DEVOLUCIÓN</h3>
-                    <input type="text" id="d-codigo" placeholder="Código">
-                    <input type="number" id="d-cantidad" value="1">
-                    <input type="text" id="d-motivo" placeholder="Motivo">
-                    <textarea id="d-obs" placeholder="Observaciones"></textarea>
-                    <button id="btnRegistrarDevolucion" class="btn-teal">🔄 Devolución</button>
-                </aside>
-                <main class="table-area">
-                    <table class="data-table">
-                        <thead><tr><th>COD</th><th>NOMBRE</th><th>CANT</th><th>MOTIVO</th><th>FECHA</th></tr></thead>
-                        <tbody id="tbody-devoluciones"></tbody>
-                    </table>
-                </main>
-            </div>
-        </section>
+    <section id="sec-bar" class="screen bar-bg">
+        <h2>Codigodebarras</h2>
+        <div class="bar-container">
+            <div class="bar-list" id="bar-list-items"></div>
+            <div class="bar-preview"><svg id="barcode-svg"></svg></div>
+        </div>
+        <div class="bar-controls">
+            <input type="text" id="bar-input" placeholder="Modelo">
+            <button class="btn-gray" onclick="generarPrevisualizacion()">Agregar</button>
+            <button class="btn-gray" onclick="imprimirPDF()">PDF</button>
+            <button class="btn-gray" onclick="nav('sec-home')">Salida</button>
+        </div>
+    </section>
 
-        <section id="historial-section" class="tab-content">
-            <div class="table-area">
-                <h3>HISTORIAL Y GPS</h3>
-                <table class="data-table">
-                    <thead><tr><th>TIPO</th><th>USUARIO</th><th>DISPOSITIVO</th><th>IP / MAPS</th><th>FECHA</th></tr></thead>
-                    <tbody id="tbody-historial"></tbody>
-                </table>
-            </div>
-        </section>
-    </div>
     <script type="module" src="app.js"></script>
 </body>
 </html>
