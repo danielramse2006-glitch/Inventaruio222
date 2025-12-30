@@ -1,0 +1,86 @@
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #e0e0e0; }
+.status-bar { background: #fff; padding: 10px 20px; border-bottom: 2px solid #ccc; font-weight: bold; color: #e74c3c; }
+.main-nav { display: flex; background: #f2f2f2; border-bottom: 1px solid #999; }
+.nav-btn { padding: 12px 20px; border: 1px solid #999; border-bottom: none; cursor: pointer; font-weight: bold; }
+.container { padding: 20px; }
+.panel-layout { display: flex; gap: 15px; height: 75vh; }
+.sidebar { width: 300px; background: #cccccc; padding: 20px; border: 1px solid #999; display: flex; flex-direction: column; gap: 10px; }
+.table-area { flex: 1; background: #fff; border: 1px solid #999; padding: 15px; overflow-y: auto; }
+input, select, textarea { padding: 10px; border: 1px solid #999; border-radius: 3px; }
+.btn-save { background: #27ae60; color: #fff; border: none; padding: 12px; cursor: pointer; font-weight: bold; }
+.btn-danger { background: #c0392b; color: #fff; border: none; padding: 12px; cursor: pointer; font-weight: bold; }
+.btn-teal { background: #008080; color: #fff; border: none; padding: 12px; cursor: pointer; font-weight: bold; }
+.btn-warning { background: #e67e22; color: #fff; border: none; padding: 12px; cursor: pointer; font-weight: bold; }
+.btn-primary { background: #2980b9; color: #fff; border: none; padding: 12px; cursor: pointer; font-weight: bold; }
+.data-table { width: 100%; border-collapse: collapse; background: #fff; }
+.data-table th { background: #d9edf7; border: 1px solid #bce8f1; padding: 10px; text-align: left; font-size: 12px; }
+.data-table td { border: 1px solid #ddd; padding: 8px; font-size: 13px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.login-box { width: 350px; margin: 100px auto; background: #ccc; padding: 30px; border: 1px solid #999; display: flex; flex-direction: column; gap: 15px; }
+
+          <select id="g-estado"><option>Nuevo</option><option>Semi nuevo</option></select>
+                    <div style="display:flex; gap:5px;">
+                        <button id="btnGuardar" class="btn-save" style="flex:1">💾 Guardar/Sumar</button>
+                        <button id="btnEliminarRapido" class="btn-danger" style="flex:1">🗑️ Borrar/Restar</button>
+                    </div>
+                </aside>
+                <main class="table-area">
+                    <table class="data-table">
+                        <thead><tr><th>ID</th><th>COD</th><th>NOMBRE</th><th>STOCK</th><th>ESTADO</th></tr></thead>
+                        <tbody id="tbody-productos"></tbody>
+                    </table>
+                </main>
+            </div>
+        </section>
+
+        <section id="salidas-section" class="tab-content">
+            <div class="panel-layout">
+                <aside class="sidebar">
+                    <h3>REGISTRAR SALIDA</h3>
+                    <input type="text" id="s-codigo" placeholder="Código">
+                    <input type="number" id="s-cantidad" value="1">
+                    <input type="text" id="s-responsable" placeholder="Responsable">
+                    <button id="btnRegistrarSalida" class="btn-warning">🚀 Salida</button>
+                </aside>
+                <main class="table-area">
+                    <table class="data-table">
+                        <thead><tr><th>COD</th><th>RESPONSABLE</th><th>CANT</th><th>FECHA</th></tr></thead>
+                        <tbody id="tbody-salidas"></tbody>
+                    </table>
+                </main>
+            </div>
+        </section>
+
+        <section id="devoluciones-section" class="tab-content">
+            <div class="panel-layout">
+                <aside class="sidebar">
+                    <h3>REGISTRAR DEVOLUCIÓN</h3>
+                    <input type="text" id="d-codigo" placeholder="Código">
+                    <input type="number" id="d-cantidad" value="1">
+                    <input type="text" id="d-motivo" placeholder="Motivo">
+                    <textarea id="d-obs" placeholder="Observaciones"></textarea>
+                    <button id="btnRegistrarDevolucion" class="btn-teal">🔄 Devolución</button>
+                </aside>
+                <main class="table-area">
+                    <table class="data-table">
+                        <thead><tr><th>COD</th><th>NOMBRE</th><th>CANT</th><th>MOTIVO</th><th>FECHA</th></tr></thead>
+                        <tbody id="tbody-devoluciones"></tbody>
+                    </table>
+                </main>
+            </div>
+        </section>
+
+        <section id="historial-section" class="tab-content">
+            <div class="table-area">
+                <h3>HISTORIAL Y GPS</h3>
+                <table class="data-table">
+                    <thead><tr><th>TIPO</th><th>USUARIO</th><th>DISPOSITIVO</th><th>IP / MAPS</th><th>FECHA</th></tr></thead>
+                    <tbody id="tbody-historial"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
